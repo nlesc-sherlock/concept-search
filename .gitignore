@@ -1,0 +1,3 @@
+*.pyc
+*exvim*
+.ipynb_checkpoints/
