@@ -48,7 +48,7 @@ def get_all_terms(es, index, doc_type, field):
     # Dirty hack up ahead.
     for i in count():
         n = 10 ** i
-        terms = get_terms(es, index, doc_type, field, n=n)
+        terms = get_top_terms(es, index, doc_type, field, n=n)
         if len(terms) < n:
             return terms
 
