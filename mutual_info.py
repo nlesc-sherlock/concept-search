@@ -25,14 +25,10 @@ except Exception:
 
 
 def all_files():
-    i = 0
     for person in os.listdir(basedir):
         docs_dir = os.path.join(basedir, person, 'all_documents')
         for f in os.listdir(docs_dir):
             yield os.path.join(docs_dir, f)
-        i += 1
-        #if i > 100:
-            #break
 
 
 X = cv.fit_transform(all_files())
