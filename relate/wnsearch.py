@@ -7,6 +7,7 @@ class WNSearch():
     def __init__(self,datadir=None,initialize=False):
         if initialize:
             nltk.download('wordnet', download_dir=datadir)
+        if type(datadir) == str and datadir not in nltk.data.path:
             nltk.data.path.append(datadir)
 
     def suggest_terms(self,query_word):
