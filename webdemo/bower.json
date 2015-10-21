@@ -1,5 +1,5 @@
 {
-  "name": "timeline",
+  "name": "concept-search-demo",
   "private": true,
   "dependencies": {
     "bootstrap-sass": "~3.3.5",
