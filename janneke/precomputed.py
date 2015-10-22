@@ -22,3 +22,4 @@ class PrecomputedSuggester(object):
 
 def _make_query(term):
     return {"query": {"term": {"terms": {"value": term}}}}
+

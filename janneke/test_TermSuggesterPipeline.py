@@ -18,11 +18,11 @@ class TermSuggesterPipelineTestCase(unittest.TestCase):
         
     def test_0_initialize_ELSearch(self): #The _0_ is added to guarantee it is the first executed test
         """Test that the ELSearch method is properly intialized"""
-        ELSearch(None, False)
+        ELSearch()
 
     def test_getSuggestionsAvg(self):
         """Test that the term suggestion works with ElasticSearch and WordNet with Average as aggregation method"""
-        methods = (WNSearch(), ELSearch(None, False))
+        methods = (WNSearch(), ELSearch())
         ts = TermSuggestionsAggregator()
 
         d1 = {u'renting': 0.032297780366267945, u'5000838': 0.03256212510711225, u"alamo's": 0.05313331194581711, 
@@ -36,7 +36,7 @@ class TermSuggesterPipelineTestCase(unittest.TestCase):
         
     def test_getSuggestionsSum(self):
         """Test that the term suggestion works with ElasticSearch and WordNet with SumMethod as aggragation"""
-        methods = (WNSearch(), ELSearch(None, False))
+        methods = (WNSearch(), ELSearch())
         ts = TermSuggestionsAggregator()
         
         d1 = {u'renting': 0.032297780366267945, u'5000838': 0.03256212510711225, u"alamo's": 0.05313331194581711, 
