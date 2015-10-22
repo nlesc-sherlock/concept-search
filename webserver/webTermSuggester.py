@@ -3,8 +3,8 @@
 #    Created by Oscar Martinez                                                 #
 #    o.rubi@esciencecenter.nl                                                  #
 ################################################################################
-from flask import Flask, request, jsonify
-from flask.ext.cors import CORS
+from flask import Flask, request, jsonify, Response
+from flask.ext.cors import CORS, cross_origin
 from TermSuggester import TermSuggester, SearchMethodAggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
@@ -22,6 +22,7 @@ def api_root():
     return 'Welcome to TermSuggester Web API'
 
 @app.errorhandler(404)
+@cross_origin(supports_credentials=True)
 def api_error(error=None):
     message = {
             'status': 404,
@@ -32,6 +33,7 @@ def api_error(error=None):
     return resp
 
 @app.route("/suggester", methods = ['GET',])
+@cross_origin(supports_credentials=True)
 def api_term():
     if request.method == 'GET':
         if 'term' in request.args:
