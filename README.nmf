@@ -1,0 +1,11 @@
+To get NMF word clusters for suggestions, run
+
+    python fit_nmf.py <n_clusters> <alpha> nmf_output.json
+
+(Try n_clusters=500 and alpha=1.)
+
+Then store the result in Elasticsearch:
+
+    python nmf_to_es.py nmf_output.json
+
+The index that is constructed can then be used by the PrecomputedSuggester.
