@@ -27,7 +27,7 @@ class TermSuggester:
             print 
             self.searchMethodInstances.append(searchMethodClasses[i](*initializeParameters[i]))
     
-    def getSuggestions(self, term, searchMethodAggregation=SearchMethodAggregation.AverageMethod):
+    def getSuggestions(self, term, searchMethodAggregation=SearchMethodAggregation.AverageMethod, searchMethodIndexes = None):
         """Get suggestions to a term."""
         # Check that term is a string and a single word
         if type(term) != str:
@@ -36,11 +36,13 @@ class TermSuggester:
         if ' ' in term:
             raise Exception('A single word is required')
         
+        if searchMethodIndexes == None:
+            searchMethodIndexes = range(len(self.searchMethodInstances))
         
         # Get the suggestion set from each method
         suggestionsResults = []
-        for searchMethodInstance in self.searchMethodInstances:
-            ts = searchMethodInstance.suggest_terms(term)
+        for i in searchMethodIndexes:
+            ts = self.searchMethodInstances[i].suggest_terms(term)
             if len(ts):
                 # We need to normalize the weights of the terms (0,1)
                 maxWeight = max(ts.values())
