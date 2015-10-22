@@ -9,13 +9,15 @@ from flask.ext.cors import CORS, cross_origin
 from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
+from precomputed import PrecomputedSuggester
 import MakeChart
 
 app = Flask(__name__)
 CORS(app)
 
 methodsConfigurationDict = {1: (WNSearch, ()),
-                            2: (ELSearch, ())}
+                            2: (ELSearch, ()),
+                            3: (PrecomputedSuggester(), ())}
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
     methodsInstances[mKey] = methodsConfigurationDict[mKey][0](*methodsConfigurationDict[mKey][1])
