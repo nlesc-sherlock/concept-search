@@ -39,6 +39,7 @@ $("#search").submit(function(e) {
     success: function(data) {
       console.log('got the data!');
       console.log(data);
+      console.log(JSON.stringify(data));
 
       displayChart(data);
 

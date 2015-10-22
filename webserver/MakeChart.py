@@ -104,7 +104,7 @@ template = json.loads("""{
 def dict2bar(d):
     # function to convert a dictionary created by TermSuggester to vega readable json
     sortedlist=sorted(d.items(), key=operator.itemgetter(1),reverse=True)
-    print sortedlist
     values = [{u'y':x[1],u'x':x[0]} for x in sortedlist]
     template['data'][0]['values'] = values
     return json.dumps(template,indent=2)
+

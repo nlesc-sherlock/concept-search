@@ -17,7 +17,7 @@ class PrecomputedSuggester(object):
                         index='suggestions', doc_type='cluster'):
             terms.update(hit['_source']['terms'].split())
         # We should keep the weights around, but currently we don't.
-        return [(term, 1.0) for term in terms]
+        return {term: 1.0 for term in terms}
 
 
 def _make_query(term):

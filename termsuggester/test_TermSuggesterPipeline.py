@@ -8,6 +8,7 @@ import unittest
 from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
+from precomputed import PrecomputedSuggester
 
 class TermSuggesterPipelineTestCase(unittest.TestCase):
     """Tests for `TermSuggester.py`."""
@@ -16,13 +17,17 @@ class TermSuggesterPipelineTestCase(unittest.TestCase):
         """Test that the WNSearch method is properly intialized"""
         WNSearch()
         
-    def test_0_initialize_ELSearch(self): #The _0_ is added to guarantee it is the first executed test
+    def test_0_initialize_ELSearch(self): 
         """Test that the ELSearch method is properly intialized"""
         ELSearch()
+        
+    def test_0_initialize_PrecomputedSuggester(self): 
+        """Test that the ELSearch method is properly intialized"""    
+        PrecomputedSuggester()
 
     def test_getSuggestionsAvg(self):
         """Test that the term suggestion works with ElasticSearch and WordNet with Average as aggregation method"""
-        methods = (WNSearch(), ELSearch())
+        methods = (WNSearch(), ELSearch(),PrecomputedSuggester())
         ts = TermSuggestionsAggregator()
 
         d1 = {u'renting': 0.032297780366267945, u'5000838': 0.03256212510711225, u"alamo's": 0.05313331194581711, 
@@ -36,7 +41,7 @@ class TermSuggesterPipelineTestCase(unittest.TestCase):
         
     def test_getSuggestionsSum(self):
         """Test that the term suggestion works with ElasticSearch and WordNet with SumMethod as aggragation"""
-        methods = (WNSearch(), ELSearch())
+        methods = (WNSearch(), ELSearch(), PrecomputedSuggester())
         ts = TermSuggestionsAggregator()
         
         d1 = {u'renting': 0.032297780366267945, u'5000838': 0.03256212510711225, u"alamo's": 0.05313331194581711, 
