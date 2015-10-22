@@ -4,13 +4,13 @@ This repository contains a python package, a web server and a web front-end to f
 
 ## Installation
 
-Several python packages have to installed for the various comnponents of this repository. 
+Several python packages have to installed for the various comnponents of this repository.
 
 pandas Flask Flask-cors nltk vincent elasticsearch sklearn scipy
 
 ## termsuggester
 
-The termsuggester python package contains a pipeline to use different methods to find suggestions for a term. 
+The termsuggester python package contains a pipeline to use different methods to find suggestions for a term.
 The pipeline uses several term-search methods to get suggestions. The term-search methods are configured and instanciated by the user.
 The suggestions from the various term-search methods are aggregated. The aggregation method can be selected by the user.
 
@@ -18,18 +18,18 @@ Current term-search methods:
  - ELSearch: Find suggestions using ElasticSearch significant terms aggregation from a Document Corpus.
  - WNSearch: Use WordNet to find suggestions for a term
  - PrecomputedSuggester: Finds suggesstions using a pre-computed term clustering data set stored in ElasticSearch. The term clustering data set is computed with Non-negative matrix factorization (NMF) clustering method.
- 
+
 Current methods for aggregation of results from various term-search methods:
  - Sum
  - Aggregation
-  
+
 To add a new term-search method you need to create a class which only condition is to have a suggest_terms(query_word) method.
 This method must return a suggestion set which is a Python dictionary in the form of:
-{str : float, str : float, ...} 
+{str : float, str : float, ...}
 where str is a suggested term and float is the weight of the suggestion (how relevant it is)
 
 The search-term methods may use other applications such as ElasticSearch. In the package we assume that such applications have been properly set up.
-For example that the related ElasticSearch indixes have been created. 
+For example that the related ElasticSearch indixes have been created.
 
 ### Method set up
 
@@ -63,6 +63,15 @@ print d
 
 ## webdemo
 
+1. Have Elasticsearch running. Elasticsearch must have an `enron` index
+   containing the enron emails (and optionally precomputed term suggestions).
+2. Have the webserver running: `python webserver/webTermSuggester.py`.
+3. Run the webdemo
+
+    cd webdemo
+    gulp serve
+
+## Data
 
 ## Related documentation
 
