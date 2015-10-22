@@ -3,6 +3,10 @@ from elasticsearch.helpers import scan
 
 
 class PrecomputedSuggester(object):
+    """Term suggester that uses precomputed results."""
+    # This class serves NMF term cluster results, but it can be reused for,
+    # e.g., mutual information terms, etc.
+
     def __init__(self):
         # XXX Make this configurable.
         self._es = Elasticsearch()
