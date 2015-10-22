@@ -3,12 +3,8 @@
 #    Created by Oscar Martinez                                                 #
 #    o.rubi@esciencecenter.nl                                                  #
 ################################################################################
-<<<<<<< HEAD
 from flask import Flask, request, jsonify
 from flask.ext.cors import CORS
-=======
-from flask import Flask, Response, request, jsonify
->>>>>>> 5b29b556347892cf208765d6efefe0b72d75efd9
 from TermSuggester import TermSuggester, SearchMethodAggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
@@ -50,7 +46,7 @@ def api_term():
             else:
                 # Default aggragation method
                 aggMethod = SearchMethodAggregation.SumMethod
-            
+
             if 'methods' in request.args:
                 try:
                     methods = str(request.args['methods']).split(',')
