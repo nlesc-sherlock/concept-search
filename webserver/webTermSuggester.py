@@ -22,6 +22,7 @@ for mKey in methodsConfigurationDict:
 ts = TermSuggestionsAggregator()
 
 @app.route('/')
+@cross_origin(supports_credentials=True)
 def api_root():
     m = {}
     for methodKey in sorted(methodsConfigurationDict.keys()):
@@ -56,17 +57,12 @@ def api_term():
                 # Default aggragation method
                 aggMethod = Aggregation.Sum
 
-            if 'methods' in request.args:
-                try:
-                    methods = []
-                    methodsKeys = str(request.args['methods']).split(',')
-                    for methodKey in methodsKeys:
-                        methods.append(methodsInstances[int(methodKey)])
-                except Exception, err:
-                    return api_error('specify correct method. Example: 1,2\n' + traceback.format_exc())
+            if 'methods[]' in request.args:
+                methods_str = request.values.getlist('methods[]')
+                methods = [methodsInstances[int(m)] for m in methods_str]
             else:
-                methods = methodsInstances.values()
-            
+                return api_error('Please select one or more query expansion methods.')
+
             # Get the suggestions
             data = ts.getSuggestions(str(request.args['term']), methods, aggMethod)
             resp = Response(MakeChart.dict2bar(data), status=200, mimetype='application/json')

@@ -1,6 +1,32 @@
+$.ajax({
+  dataType: "json",
+  url: "http://127.0.0.1:5000/",
+  method: "get",
+  xhrFields: {
+    withCredentials: true
+  },
+  success: function(data) {
+    console.log('got the data!');
+    console.log(data);
+    $.each(data, function( key, method ){
+      var html = "<div class=\"checkbox-inline\">" +
+                 "   <label>" +
+                 "     <input type=\"checkbox\" name=\"methods[]\" value=\"" +
+                 key + "\" checked> " + method[0] + "  </label>";
+      $(html).appendTo( $("#qem") );
+    });
+  },
+  error: function(xhr, ajaxOptions, thrownError) {
+    console.log(xhr.status);
+    console.log(thrownError);
+  }
+});
+
 $("#search").submit(function(e) {
   console.log('form submitted');
   e.preventDefault();
+
+  console.log($("#search").serialize());
 
   $.ajax({
     dataType: "json",
