@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app)
 
 methodsConfigurationDict = {1: (WNSearch, ()),
-                            2: (ELSearch, (None, False))}
+                            2: (ELSearch, ())}
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
     methodsInstances[mKey] = methodsConfigurationDict[mKey][0](*methodsConfigurationDict[mKey][1])
