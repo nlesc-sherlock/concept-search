@@ -41,7 +41,7 @@
 
     <!-- Search bar -->
     <div class="row">
-      <form class="form" role="form" action="http://127.0.0.1:5000/suggester" method="get">
+      <form class="form" role="form" id="search">
         <div class="input-group col-md-12">
           <input type="text" class="form-control" name="term"/>
           <span class="input-group-btn">
@@ -55,6 +55,14 @@
     <!-- End of search bar -->
 
     <div class="col-md-12" style="height:50px;"></div>
+
+    <!-- Term suggestions -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="suggestions"></div>
+      </div>
+    </div>
+    <!-- End of term suggestions -->
 
     <!-- Term suggestions -->
     <div class="row">
