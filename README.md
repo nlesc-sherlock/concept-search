@@ -6,7 +6,7 @@ This repository contains a python package, a web server and a web front-end to f
 
 Several python packages have to installed for the various comnponents of this repository. 
 
-pandas Flask Flask-cors nltk vincent elasticsearch sklearn
+pandas Flask Flask-cors nltk vincent elasticsearch sklearn scipy
 
 ## termsuggester
 
@@ -33,9 +33,15 @@ For example that the related ElasticSearch indixes have been created.
 
 ### Method set up
 
-ELSearch method requires to run `get_dc.py` and `dc_to_es.py` before using termsuggester.
-WNSearch method does not require setup.
-PrecomputedSuggester method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
+- ELSearch method requires to run `get_dc.py` and `dc_to_es.py` before using termsuggester.
+- WNSearch method does not require setup.
+- PrecomputedSuggester method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
+To get NMF word clusters for suggestions, run
+    `python fit_nmf.py <n_clusters> <alpha> nmf_output.json`
+(Try n_clusters=500 and alpha=1.)
+Then store the result in Elasticsearch:
+    `python nmf_to_es.py nmf_output.json`
+The index that is constructed can then be used by the PrecomputedSuggester.
 
 ### Example of usage (after various methods setup)
 
