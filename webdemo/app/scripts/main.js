@@ -17,11 +17,19 @@ $("#search").submit(function(e) {
       displayChart(data);
 
     },
-    error: function (xhr, ajaxOptions, thrownError) {
-        console.log(xhr.status);
-        console.log(thrownError);
-      }
+    error: function(xhr, ajaxOptions, thrownError) {
+      console.log(xhr.status);
+      console.log(thrownError);
+    }
   });
+});
+
+$('input[type=radio]').on('change', function() {
+  console.log('changed radio');
+  var term = $( "#term" ).val();
+  if(term !== ''){
+    $("#search").submit();
+  }
 });
 
 function displayChart(json_data) {
