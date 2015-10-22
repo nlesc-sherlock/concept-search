@@ -11,7 +11,7 @@ from wnsearch import WNSearch
 app = Flask(__name__)
 
 searchMethodClasses = (ELSearch, WNSearch)
-initializeParameters = ((None, False),('/home/oscarr/concept-search-wd/data/wordnet', False))
+initializeParameters = ((None, False),([]))
 ts = TermSuggester(searchMethodClasses, initializeParameters)
 
 @app.route("/suggester", methods = ['GET',])
