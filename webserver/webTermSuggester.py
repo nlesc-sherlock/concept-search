@@ -4,11 +4,13 @@
 #    o.rubi@esciencecenter.nl                                                  #
 ################################################################################
 from flask import Flask, request, jsonify
+from flask.ext.cors import CORS
 from TermSuggester import TermSuggester, SearchMethodAggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
 
 app = Flask(__name__)
+CORS(app)
 
 searchMethodClasses = (ELSearch, WNSearch)
 initializeParameters = ((None, False),([]))
