@@ -5,12 +5,14 @@
 ################################################################################
 import traceback
 from flask import Flask, Response, request, jsonify
+from flask.ext.cors import CORS, cross_origin
 from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
 import MakeChart
 
 app = Flask(__name__)
+CORS(app)
 
 methodsConfigurationDict = {1: (WNSearch, ()),
                             2: (ELSearch, (None, False))}
@@ -27,6 +29,7 @@ def api_root():
     return jsonify(m)
 
 @app.errorhandler(404)
+@cross_origin(supports_credentials=True)
 def api_error(error=None):
     message = {
             'status': 404,
@@ -37,6 +40,7 @@ def api_error(error=None):
     return resp
 
 @app.route("/suggester", methods = ['GET',])
+@cross_origin(supports_credentials=True)
 def api_term():
     if request.method == 'GET':
         if 'term' in request.args:
@@ -51,7 +55,7 @@ def api_term():
             else:
                 # Default aggragation method
                 aggMethod = Aggregation.Sum
-            
+
             if 'methods' in request.args:
                 try:
                     methods = []

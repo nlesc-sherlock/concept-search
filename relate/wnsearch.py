@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import nltk
+from nltk.corpus import wordnet as wn
 
 class WNSearch():
     """Class to perform searches in WordNet"""
@@ -8,7 +9,6 @@ class WNSearch():
         nltk.download('wordnet')
 
     def suggest_terms(self,query_word):
-        from nltk.corpus import wordnet as wn
         term_dict={}
         for syn in wn.synsets(query_word):
             term_dict[syn._name.split('.')[0]]=1
