@@ -41,11 +41,12 @@ class TermSuggester:
         suggestionsResults = []
         for searchMethodInstance in self.searchMethodInstances:
             ts = searchMethodInstance.suggest_terms(term)
-            # We need to normalize the weights of the terms (0,1)
-            maxWeight = max(ts.values())
-            for t in ts:
-                ts[t] = ts[t] / maxWeight
-            suggestionsResults.append(ts)
+            if len(ts):
+                # We need to normalize the weights of the terms (0,1)
+                maxWeight = max(ts.values())
+                for t in ts:
+                    ts[t] = ts[t] / maxWeight
+                suggestionsResults.append(ts)
 
         # Each method returns a suggestion set which is dictionary in the form of:
         # {str : float, str : float, ...} where str is a suggested term and float is the weight of the suggestion (how relevant it is)
