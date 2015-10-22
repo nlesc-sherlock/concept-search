@@ -15,9 +15,9 @@ The pipeline uses several term-search methods to get suggestions. The term-searc
 The suggestions from the various term-search methods are aggregated. The aggregation method can be selected by the user.
 
 Current term-search methods:
- - Elastic Search 1
- - WordNet: Use WordNet to find suggestions for a term
- - Elastic-Search 2
+ - ELSearch: Find suggestions using ElasticSearch significant terms aggregation from a Document Corpus.
+ - WNSearch: Use WordNet to find suggestions for a term
+ - PrecomputedSuggester: Finds suggesstions using a pre-computed term clustering data set stored in ElasticSearch. The term clustering data set is computed with Non-negative matrix factorization (NMF) clustering method.
  
 Current methods for aggregation of results from various term-search methods:
  - Sum
@@ -33,8 +33,9 @@ For example that the related ElasticSearch indixes have been created.
 
 ### Method set up
 
-ElasticSearch-1 method requires to run `get_dc.py` and `dc_to_es.py` before using termsuggester.
-ElasticSearch-2 method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
+ELSearch method requires to run `get_dc.py` and `dc_to_es.py` before using termsuggester.
+WNSearch method does not require setup.
+PrecomputedSuggester method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
 
 ### Example of usage (after various methods setup)
 
@@ -42,8 +43,9 @@ ElasticSearch-2 method requires to run `fit_nmf.py` and `nmf_to_es.py` before us
 from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
+from precomputed import PrecomputedSuggester
 
-methods = (WNSearch(), ELSearch(None, False))
+methods = (WNSearch(), ELSearch(), PrecomputedSuggester())
 ts = TermSuggestionsAggregator()
 d = ts.getSuggestions('car', methods, Aggregation.Average)
 print d
