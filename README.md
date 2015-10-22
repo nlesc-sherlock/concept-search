@@ -9,3 +9,7 @@ Some pointers to get started:
 the term-term correlation matrix is _A_*_A_.T (see
 [Automatic Query Expansion in Information Retrieval](http://www-labs.iro.umontreal.ca/~nie/IFT6255/carpineto-Survey-QE.pdf),
 page 13, above equation 5).
+
+# Installation
+
+pandas Flask Flask-cors nltk vincent elasticsearch sklearn
