@@ -37,8 +37,10 @@ For example that the related ElasticSearch indixes have been created.
 - WNSearch method does not require setup.
 - PrecomputedSuggester method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
 To get NMF word clusters for suggestions, run
+    `pip install -U git+https://github.com/scikit-learn/scikit-learn.git`
+Then
     `python fit_nmf.py <n_clusters> <alpha> nmf_output.json`
-(Try n_clusters=500 and alpha=1.)
+(Try `n_clusters`=500 and `alpha`=1.)
 Then store the result in Elasticsearch:
     `python nmf_to_es.py nmf_output.json`
 The index that is constructed can then be used by the PrecomputedSuggester.
