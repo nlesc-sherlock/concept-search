@@ -86,6 +86,9 @@ page 13, above equation 5).
 
 ## More ideas (for next sprint)
 
+### Ontologies
+
+* [A review of ontology based query expansion](https://nlesc.sharepoint.com/sites/sherlock/Shared%20Documents/papers/concept%20search/1-s2.0-S0306457306001476-main.pdf)
 * [IBM Watson Concept Expansion](http://concept-expansion-demo.mybluemix.net/)
   * The Concept Expansion process is also known as Semantic Lexicon Induction
   or Semantic Set Expansion.
