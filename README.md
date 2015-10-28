@@ -73,6 +73,9 @@ print d
 
 ## Data
 
+* [Get the data](https://github.com/nlesc-sherlock/concept-search/blob/develop/GettingTheData.ipynb)
+(IPython notebook)
+
 ## Related documentation
 
 * [Text feature extraction using scikit-learn](http://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction)
@@ -81,8 +84,10 @@ the term-term correlation matrix is _A_*_A_.T (see
 [Automatic Query Expansion in Information Retrieval](http://www-labs.iro.umontreal.ca/~nie/IFT6255/carpineto-Survey-QE.pdf),
 page 13, above equation 5).
 
+## More ideas (for next sprint)
 
-Some pointers to get started:
-
-* [Get the data](https://github.com/nlesc-sherlock/concept-search/blob/develop/GettingTheData.ipynb)
-(IPython notebook)
+* [IBM Watson Concept Expansion](http://concept-expansion-demo.mybluemix.net/)
+  * The Concept Expansion process is also known as Semantic Lexicon Induction
+  or Semantic Set Expansion.
+  * Probably a more 'ontology based' approach
+  * Could not find a paper about the IBM Watson Concept Expansion Webservice
