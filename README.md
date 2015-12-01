@@ -18,11 +18,11 @@ Current term-search methods:
  - ELSearch: Find suggestions using ElasticSearch significant terms aggregation from a Document Corpus.
  - WNSearch: Use WordNet to find suggestions for a term
  - PrecomputedSuggester: Finds suggesstions using a pre-computed term clustering data set stored in ElasticSearch. The term clustering data set is computed with Non-negative matrix factorization (NMF) clustering method.
- - Word2Vec: Use word2vec to find most similar terms
+ - Word2VecSuggester: Use word2vec to find most similar terms
 
 Current methods for aggregation of results from various term-search methods:
  - Sum
- - Aggregation
+ - Average
 
 To add a new term-search method you need to create a class which only condition is to have a suggest_terms(query_word) method.
 This method must return a suggestion set which is a Python dictionary in the form of:
