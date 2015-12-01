@@ -37,7 +37,7 @@ func main() {
 	docs := make(chan hit, nworkers)
 	go allDocs(index, doctype, docs)
 
-	stats := pairStats(nworkers, docs)
+	stats := cooccurStats(nworkers, docs)
 	nterms, npairs := 0., 0.
 	for _, s := range stats {
 		nterms += s.count
@@ -82,7 +82,11 @@ func main() {
 }
 
 // Compute co-occurrence statistics.
-func pairStats(nworkers int, docs <-chan hit) map[string]termStats {
+//
+// Consumes all documents coming in on the channel docs; uses nworkers
+// goroutines.
+// Returns, for each term occurring in docs, a termStats.
+func cooccurStats(nworkers int, docs <-chan hit) map[string]termStats {
 	var wg sync.WaitGroup
 	wg.Add(nworkers)
 
@@ -93,24 +97,7 @@ func pairStats(nworkers int, docs <-chan hit) map[string]termStats {
 		go func() {
 			stats := make(map[string]termStats)
 			for h := range docs {
-				tokens := analyze(h.Source.Text)
-				for i := range tokens {
-					if tokens[i].Type == "<ALPHANUM>" {
-						ti := tokens[i].Token
-						si := stats[ti]
-						si.count++
-						if si.coocc == nil {
-							si.coocc = make(map[string]float64)
-						}
-						for j := i; j < len(tokens) && j < i+*windowsize; j++ {
-							if tokens[j].Type == "<ALPHANUM>" {
-								tj := tokens[j].Token
-								si.coocc[tj]++
-							}
-						}
-						stats[ti] = si
-					}
-				}
+				cooccur(analyze(h.Text), stats)
 			}
 			ch <- stats
 			wg.Done()
@@ -127,10 +114,8 @@ func pairStats(nworkers int, docs <-chan hit) map[string]termStats {
 	for st := range ch {
 		for k, v := range st {
 			tk := total[k]
+			tk.init()
 			tk.count += v.count
-			if tk.coocc == nil {
-				tk.coocc = make(map[string]float64)
-			}
 			for other, n := range v.coocc {
 				tk.coocc[other] += n
 			}
@@ -140,18 +125,37 @@ func pairStats(nworkers int, docs <-chan hit) map[string]termStats {
 	return total
 }
 
-// Get top-k terms by mutual information.
+// Add co-occurrence statistics for tokens to stats.
+func cooccur(tokens []token, stats map[string]termStats) {
+	for i := range tokens {
+		if tokens[i].Type == "<ALPHANUM>" {
+			ti := tokens[i].Token
+			si := stats[ti]
+			si.init()
+			si.count++
+			for j := i; j < len(tokens) && j < i+*windowsize; j++ {
+				if tokens[j].Type == "<ALPHANUM>" {
+					tj := tokens[j].Token
+					si.coocc[tj]++
+				}
+			}
+			stats[ti] = si
+		}
+	}
+}
+
+// Get top-k terms by mutual information for ts.term.
 func topMI(ts *termWithStats, global map[string]termStats,
 	nterms, npairs float64, k int) *termTopK {
 
-	coocc := make([]termCount, 0, len(ts.stats.coocc))
-	for other, count := range ts.stats.coocc {
+	coocc := make([]termCount, 0, len(ts.coocc))
+	for other, count := range ts.coocc {
 		if other != ts.term {
 			coocc = append(coocc, termCount{term: other, count: count})
 		}
 	}
 
-	probI := ts.stats.count / nterms
+	probI := ts.count / nterms
 	for j := range coocc {
 		probJ := global[coocc[j].term].count / nterms
 		probCo := coocc[j].count / npairs
@@ -173,14 +177,22 @@ func min(a, b int) int {
 	return b
 }
 
+// Statistics for a term (which is not represented in this struct).
 type termStats struct {
-	count float64
-	coocc map[string]float64
+	count float64            // Frequency of the term in the collection.
+	coocc map[string]float64 // Terms that co-occur with the term.
 }
 
+func (t *termStats) init() {
+	if t.coocc == nil {
+		t.coocc = make(map[string]float64)
+	}
+}
+
+// Like termStats, but actually represents the term.
 type termWithStats struct {
-	term  string
-	stats termStats
+	term string
+	termStats
 }
 
 type termTopK struct {
@@ -193,6 +205,7 @@ type termCount struct {
 	count float64
 }
 
+// Sorts a []termCount by descending count.
 type byCount []termCount
 
 func (a byCount) Len() int           { return len(a) }
@@ -201,27 +214,17 @@ func (a *byCount) Swap(i, j int)     { (*a)[i], (*a)[j] = (*a)[j], (*a)[i] }
 
 const esbase = "http://localhost:9200"
 
-// JSON parser.
-type searchresult struct {
-	hits     `json:"hits"`
-	ScrollId string `json:"_scroll_id"`
-	//Timed_out bool `json:"timed_out"`
-	//Took int `json:"took"`
-}
-
-type hits struct {
-	Hits []hit `json:"hits"`
-}
-
 type hit struct {
 	Id     string `json:"_id"`
-	Source doc    `json:"_source"`
+	doc    `json:"_source"`
 }
 
 type doc struct {
 	Text string `json:"text"`
 }
 
+// Fetches from Elasticsearch all documents of type doctype in the given index.
+// Produces its results on the channel docs.
 func allDocs(index, doctype string, docs chan<- hit) {
 	defer close(docs)
 	u := fmt.Sprintf("%s/%s/%s/_search?scroll=10s&size=100",
@@ -242,7 +245,15 @@ func allDocs(index, doctype string, docs chan<- hit) {
 			panic(err)
 		}
 
-		var result searchresult
+		type hits struct {
+			Hits []hit `json:"hits"`
+		}
+		var result struct {
+			hits     `json:"hits"`
+			ScrollId string `json:"_scroll_id"`
+			//Timed_out bool `json:"timed_out"`
+			//Took int `json:"took"`
+		}
 		err = json.Unmarshal(data, &result)
 		if err != nil {
 			panic(err)
@@ -263,15 +274,12 @@ func allDocs(index, doctype string, docs chan<- hit) {
 	}
 }
 
-type tokens struct {
-	Tokens []token `json:"tokens"`
-}
-
 type token struct {
 	Type  string `json:"type"`
 	Token string `json:"token"`
 }
 
+// Analyze s by passing it to Elasticsearch.
 func analyze(s string) []token {
 	u := esbase + "/_analyze"
 	resp, err := http.Post(u, "text", strings.NewReader(s))
@@ -284,7 +292,9 @@ func analyze(s string) []token {
 		panic(err)
 	}
 
-	var t tokens
+	var t struct {
+		Tokens []token `json:"tokens"`
+	}
 	err = json.Unmarshal(data, &t)
 	if err != nil {
 		panic(err)
