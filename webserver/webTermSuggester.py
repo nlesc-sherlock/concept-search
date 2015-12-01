@@ -12,6 +12,7 @@ from wnsearch import WNSearch
 from word2vec import Word2VecSuggester
 from precomputed import PrecomputedSuggester
 import MakeChart
+from config import get_word2vec_model
 
 app = Flask(__name__)
 CORS(app)
@@ -19,7 +20,7 @@ CORS(app)
 methodsConfigurationDict = {1: (WNSearch, ()),
                             2: (ELSearch, ()),
                             3: (PrecomputedSuggester, ()),
-                            4: (Word2VecSuggester, ('/home/jvdzwaan/data/tmp/enron_word2vec.model', ))}
+                            4: (Word2VecSuggester, (get_word2vec_model(), ))}
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
     methodsInstances[mKey] = methodsConfigurationDict[mKey][0](*methodsConfigurationDict[mKey][1])

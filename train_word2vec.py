@@ -6,6 +6,8 @@ import logging
 from nltk.tokenize import sent_tokenize, word_tokenize
 from gensim.models import Word2Vec
 
+from termsuggester.config import get_word2vec_model
+
 logging.basicConfig(level=logging.INFO)
 
 class Word2VecCorpus():
@@ -22,7 +24,7 @@ class Word2VecCorpus():
                     yield [w.lower() for w in word_tokenize(s)]
 
 try:
-    basedir, outfile = sys.argv[1:]
+    basedir = sys.argv[1]
 except Exception:
     print("usage: %s dir outfile"
           % sys.argv[0], file=sys.stderr)
@@ -30,4 +32,8 @@ except Exception:
 
 model = Word2Vec(Word2VecCorpus(basedir), size=100, window=5, min_count=5,
                  workers=4)
+
+outfile = get_word2vec_model()
+if not os.path.exists(os.path.dirname(outfile)):
+        os.mkdir(os.path.dirname(outfile))
 model.save(outfile)
