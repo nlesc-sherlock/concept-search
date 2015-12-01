@@ -17,9 +17,10 @@ class Word2VecSuggester():
             self.model = None
 
     def suggest_terms(self, query_word):
+        # TODO: make the number of terms returned a parameter of the function
         if self.model is not None:
             results = self.model.most_similar(positive=[query_word],
-                                              negative=[])
+                                              negative=[], topn=10)
             suggestions = {}
             for word, weight in results:
                 suggestions[word] = weight
