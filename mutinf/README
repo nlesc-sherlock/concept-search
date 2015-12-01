@@ -1,0 +1,7 @@
+You need a Go compiler to run this.
+
+    sudo apt-get install golang
+
+Then
+
+    go run mutinf.go > mutinf.txt
