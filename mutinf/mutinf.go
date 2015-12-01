@@ -1,5 +1,9 @@
 // Term suggestion by mutual information:
 // http://www.iro.umontreal.ca/~nie/IFT6255/carpineto-Survey-QE.pdf, p. 14
+//
+// Implementation notes: mutual information between terms t and u is
+// log1p(P(t,u) / (P(t)×P(u))). P(t,u) is the relative frequency with which
+// t and u co-occur within a window; P(t,u) = P(u,t).
 package main
 
 import (
