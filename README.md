@@ -6,7 +6,7 @@ This repository contains a python package, a web server and a web front-end to f
 
 Several python packages have to installed for the various comnponents of this repository.
 
-pandas Flask Flask-cors nltk vincent elasticsearch sklearn scipy
+pandas Flask Flask-cors nltk vincent elasticsearch sklearn scipy gensim
 
 ## termsuggester
 
