@@ -9,6 +9,7 @@ from flask.ext.cors import CORS, cross_origin
 from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
+from word2vec import Word2VecSuggester
 from precomputed import PrecomputedSuggester
 import MakeChart
 
@@ -17,7 +18,8 @@ CORS(app)
 
 methodsConfigurationDict = {1: (WNSearch, ()),
                             2: (ELSearch, ()),
-                            3: (PrecomputedSuggester, ())}
+                            3: (PrecomputedSuggester, ()),
+                            4: (Word2VecSuggester, ('/home/jvdzwaan/data/tmp/enron_word2vec.model', ))}
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
     methodsInstances[mKey] = methodsConfigurationDict[mKey][0](*methodsConfigurationDict[mKey][1])
