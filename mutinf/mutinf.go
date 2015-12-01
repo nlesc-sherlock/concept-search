@@ -8,6 +8,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -19,12 +20,17 @@ import (
 	"sync"
 )
 
+var windowsize = flag.Int("w", 4,
+	"size of window for determining co-occurrence")
+
 func main() {
-	if len(os.Args) < 3 {
+	flag.Parse()
+	args := flag.Args()
+	if len(args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: %s index doctype\n", os.Args[0])
 		os.Exit(1)
 	}
-	index, doctype := os.Args[1], os.Args[2]
+	index, doctype := args[0], args[1]
 
 	nworkers := runtime.GOMAXPROCS(0)
 
@@ -96,7 +102,7 @@ func pairStats(nworkers int, docs <-chan hit) map[string]termStats {
 						if si.coocc == nil {
 							si.coocc = make(map[string]float64)
 						}
-						for j := i; j < len(tokens) && j < i+windowsize; j++ {
+						for j := i; j < len(tokens) && j < i+*windowsize; j++ {
 							if tokens[j].Type == "<ALPHANUM>" {
 								tj := tokens[j].Token
 								si.coocc[tj]++
@@ -193,10 +199,7 @@ func (a byCount) Len() int           { return len(a) }
 func (a byCount) Less(i, j int) bool { return a[i].count > a[j].count }
 func (a *byCount) Swap(i, j int)     { (*a)[i], (*a)[j] = (*a)[j], (*a)[i] }
 
-const (
-	esbase     = "http://localhost:9200"
-	windowsize = 4
-)
+const esbase = "http://localhost:9200"
 
 // JSON parser.
 type searchresult struct {

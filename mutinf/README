@@ -4,4 +4,4 @@ You need a Go compiler to run this.
 
 Then
 
-    go run mutinf.go > mutinf.txt
+    go run mutinf.go index doctype > mutinf.txt
