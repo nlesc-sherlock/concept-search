@@ -1,6 +1,12 @@
 // Term suggestion by mutual information:
 // http://www.iro.umontreal.ca/~nie/IFT6255/carpineto-Survey-QE.pdf, p. 14
 //
+// Produces on stdout a series of Elasticsearch bulk API requests that
+// create an index to be used for term suggestion. Pipe the output through
+//	curl -s -XPOST localhost:9200/_bulk --data-binary @bulk |
+//		jq '.took, .errors'
+// to store it in an Elasticsearch index called "mi".
+//
 // Implementation notes: mutual information between terms t and u is
 // log1p(P(t,u) / (P(t)×P(u))). P(t,u) is the relative frequency with which
 // t and u co-occur within a window; P(t,u) = P(u,t).
@@ -72,13 +78,7 @@ func main() {
 		close(ch)
 	}()
 
-	for ts := range output {
-		fmt.Printf("%q: ", ts.term)
-		for _, tc := range ts.top {
-			fmt.Printf(" %q %f", tc.term, tc.count)
-		}
-		fmt.Println("")
-	}
+	writeBulk(output)
 }
 
 // Compute co-occurrence statistics.
@@ -151,17 +151,17 @@ func topMI(ts *termWithStats, global map[string]termStats,
 	coocc := make([]termCount, 0, len(ts.coocc))
 	for other, count := range ts.coocc {
 		if other != ts.term {
-			coocc = append(coocc, termCount{term: other, count: count})
+			coocc = append(coocc, termCount{Term: other, Count: count})
 		}
 	}
 
 	probI := ts.count / nterms
 	for j := range coocc {
-		probJ := global[coocc[j].term].count / nterms
-		probCo := coocc[j].count / npairs
+		probJ := global[coocc[j].Term].count / nterms
+		probCo := coocc[j].Count / npairs
 		mi := math.Log1p(probCo / (probI * probJ))
 
-		coocc[j].count = mi
+		coocc[j].Count = mi
 	}
 
 	bycount := byCount(coocc)
@@ -201,15 +201,15 @@ type termTopK struct {
 }
 
 type termCount struct {
-	term  string
-	count float64
+	Term  string  `json:"term"`
+	Count float64 `json:"value"`
 }
 
 // Sorts a []termCount by descending count.
 type byCount []termCount
 
 func (a byCount) Len() int           { return len(a) }
-func (a byCount) Less(i, j int) bool { return a[i].count > a[j].count }
+func (a byCount) Less(i, j int) bool { return a[i].Count > a[j].Count }
 func (a *byCount) Swap(i, j int)     { (*a)[i], (*a)[j] = (*a)[j], (*a)[i] }
 
 const esbase = "http://localhost:9200"
@@ -301,4 +301,18 @@ func analyze(s string) []token {
 	}
 
 	return t.Tokens
+}
+
+// Write terms as ES bulk requests on stdout.
+func writeBulk(terms chan *termTopK) {
+	for t := range terms {
+		jt, _ := json.Marshal(t.term)
+		fmt.Printf(
+			`{"index": {"_index": "mi", "_type": "miterm", "_id": %s}}`, jt)
+		fmt.Println()
+
+		fmt.Printf("{\"terms\":")
+		jt, _ = json.Marshal(t.top)
+		fmt.Printf("%s}\n", jt)
+	}
 }
