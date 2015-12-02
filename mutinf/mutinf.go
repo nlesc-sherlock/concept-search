@@ -1,11 +1,8 @@
 // Term suggestion by mutual information:
 // http://www.iro.umontreal.ca/~nie/IFT6255/carpineto-Survey-QE.pdf, p. 14
 //
-// Produces on stdout a series of Elasticsearch bulk API requests that
-// create an index to be used for term suggestion. Pipe the output through
-//	curl -s -XPOST localhost:9200/_bulk --data-binary @bulk |
-//		jq '.took, .errors'
-// to store it in an Elasticsearch index called "mi".
+// Fetches documents from Elasticsearch and writes them back into a custom
+// index.
 //
 // Implementation notes: mutual information between terms t and u is
 // log1p(P(t,u) / (P(t)×P(u))). P(t,u) is the relative frequency with which
@@ -13,9 +10,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -26,6 +25,8 @@ import (
 	"sync"
 )
 
+var miIndex = flag.String("index", "mi",
+	"name of MI terms index")
 var windowsize = flag.Int("w", 4,
 	"size of window for determining co-occurrence")
 
@@ -78,7 +79,7 @@ func main() {
 		close(ch)
 	}()
 
-	writeBulk(output)
+	store(output)
 }
 
 // Compute co-occurrence statistics.
@@ -215,8 +216,8 @@ func (a *byCount) Swap(i, j int)     { (*a)[i], (*a)[j] = (*a)[j], (*a)[i] }
 const esbase = "http://localhost:9200"
 
 type hit struct {
-	Id     string `json:"_id"`
-	doc    `json:"_source"`
+	Id  string `json:"_id"`
+	doc `json:"_source"`
 }
 
 type doc struct {
@@ -303,16 +304,55 @@ func analyze(s string) []token {
 	return t.Tokens
 }
 
-// Write terms as ES bulk requests on stdout.
-func writeBulk(terms chan *termTopK) {
-	for t := range terms {
-		jt, _ := json.Marshal(t.term)
-		fmt.Printf(
-			`{"index": {"_index": "mi", "_type": "miterm", "_id": %s}}`, jt)
-		fmt.Println()
+const chunksize = 100
 
-		fmt.Printf("{\"terms\":")
-		jt, _ = json.Marshal(t.top)
-		fmt.Printf("%s}\n", jt)
+// Store all of terms in Elasticsearch.
+func store(terms chan *termTopK) {
+	bulk := make(chan *bytes.Buffer, 1)
+	go func() {
+		chunk := new(bytes.Buffer)
+
+		n := 0
+		for t := range terms {
+			writeBulk(t, chunk)
+
+			n++
+			if n == chunksize {
+				bulk <- chunk
+				n = 0
+				chunk = new(bytes.Buffer)
+			}
+		}
+		if n > 0 {
+			bulk <- chunk
+		}
+		close(bulk)
+	}()
+
+	u := esbase + "/_bulk"
+	for chunk := range bulk {
+		resp, err := http.Post(u, "application/x-www-form-urlencoded", chunk)
+
+		var data []byte
+		if err == nil {
+			data, err = ioutil.ReadAll(resp.Body)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "got %s for %s\n", data, chunk)
+			panic(err)
+		}
 	}
+}
+
+// Write t as ES bulk requests to w.
+func writeBulk(t *termTopK, w io.Writer) {
+	jt, _ := json.Marshal(t.term)
+	fmt.Fprintf(w,
+		`{"index": {"_index": %q, "_type": "miterm", "_id": %s}}`,
+		*miIndex, jt)
+	fmt.Fprintln(w)
+
+	fmt.Fprint(w, "{\"terms\":")
+	jt, _ = json.Marshal(t.top)
+	fmt.Fprintf(w, "%s}\n", jt)
 }
