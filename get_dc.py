@@ -8,6 +8,7 @@
 
 import json
 import sys
+import os
 
 def convertToDC(inputDir):
     data_dir = os.path.join(inputDir, 'enron_mail_clean')
