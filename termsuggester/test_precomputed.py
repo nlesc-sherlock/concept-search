@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from precomputed import PrecomputedSuggester
+from precomputed import PrecomputedClusterSuggester
 
 
 class TestPrecomputed(TestCase):
     def test_precomputed(self):
-        suggest = PrecomputedSuggester().suggest_terms
+        suggest = PrecomputedClusterSuggester().suggest_terms
         self.assertTrue(isinstance(suggest('baseball'), dict))
         terms = [term for term in suggest('baseball')]
         self.assertIn('ticket', terms)
