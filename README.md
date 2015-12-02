@@ -2,6 +2,17 @@
 
 This repository contains a python package, a web server and a web front-end to find suggestions to words which are being queried in a document store.
 
+## Planning/Subtasks
+
+* Make list of test queries (single term vs multiple terms/phrase queries)
+  * Papers etc. about Enron data: http://enrondata.org/content/research/
+* Implement query expansion algorithms
+* Merge/cluster results from query expansion algorithms
+* Visualize merged query expansion results
+* Build simple user interface/demo
+* Do the same for terms that do not correlate/co-occur with query terms (does
+  that make sense?)
+
 ## Installation
 
 Several python packages have to installed for the various comnponents of this repository.
