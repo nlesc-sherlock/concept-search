@@ -3,7 +3,6 @@
 # run ./bin/elasticsearch in the directory where you installed it
 import os, urllib2, json, operator
 from elasticsearch import Elasticsearch
-import vsmlib
 
 
 es = Elasticsearch()
@@ -23,7 +22,7 @@ class RocchioSuggester():
         ks = set([])
         for x in xs: 
             for k in x: 
-                ks.add(x)
+                ks.add(k)
         c = {}
         for k in ks:
             v = 0
@@ -32,13 +31,13 @@ class RocchioSuggester():
                 if k in x:
                     n += 1
                     v += x[k]
-            c[k] = v / k
+            c[k] = v / n
         return c
     
     def getTVsCentroid(self, esresponse):
         tvs = []
         if 'hits' in esresponse and 'hits' in esresponse['hits']:
-            for i in range(esresponse['hits']['hits']):
+            for i in range(len(esresponse['hits']['hits'])):
                 #data = es.termvectors(index='enron', doc_type='email', id=esresponse['hits']['hits'][i]['_id'])
                 data = json.load(urllib2.urlopen('http://localhost:9200/enron/email/' + esresponse['hits']['hits'][i]['_id'].replace('/','%2F') + '/_termvector'))
                 tv = {}
@@ -62,7 +61,7 @@ class RocchioSuggester():
         
         centroidTop = self.getTVsCentroid(resTop)
         centroidBottom = self.getTVsCentroid(resBottom)
-        
+       # 
         normCentroidTop = {}
         maxDimCentroidTop = float(max(centroidTop.values()))
         for k in centroidTop:
@@ -73,9 +72,9 @@ class RocchioSuggester():
         for k in centroidBottom:
             normCentroidBottom[k] = float(centroidBottom[k]) / maxDimCentroidBottom
             
-        ks = set(initialTV.values() + normCentroidTop.values() + normCentroidBottom.values())
+        ks = set(initialTV.keys() + normCentroidTop.keys() + normCentroidBottom.keys())
         finalTV = {}
         for k in ks:
             finalTV[k] = (self.weightInitial * initialTV.get(k, 0)) + (self.weightTop * normCentroidTop.get(k, 0)) - (self.weightBottom * normCentroidBottom.get(k, 0))
         
-        return dict(sorted(finalTV.items(), key=operator.itemgetter(1))[:self.numResults])
+        return dict(sorted(finalTV.items(), key=operator.itemgetter(1), reverse=True)[:self.numResults])

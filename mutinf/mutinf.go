@@ -1,15 +1,20 @@
 // Term suggestion by mutual information:
 // http://www.iro.umontreal.ca/~nie/IFT6255/carpineto-Survey-QE.pdf, p. 14
 //
+// Fetches documents from Elasticsearch and writes them back into a custom
+// index.
+//
 // Implementation notes: mutual information between terms t and u is
 // log1p(P(t,u) / (P(t)×P(u))). P(t,u) is the relative frequency with which
 // t and u co-occur within a window; P(t,u) = P(u,t).
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -20,14 +25,22 @@ import (
 	"sync"
 )
 
+var kterms = flag.Int("k", 20,
+	"report at most k terms for each query term")
+var miIndex = flag.String("index", "mi",
+	"name of MI terms index")
+var minCF = flag.Int("mincf", 2,
+	"disregard terms that occur less often than this")
 var windowsize = flag.Int("w", 4,
 	"size of window for determining co-occurrence")
+
+const usage = "Usage: %s [options] index doctype\n  -h\n\tshow options\n"
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s index doctype\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, usage, os.Args[0])
 		os.Exit(1)
 	}
 	index, doctype := args[0], args[1]
@@ -38,9 +51,9 @@ func main() {
 	go allDocs(index, doctype, docs)
 
 	stats := cooccurStats(nworkers, docs)
-	nterms, npairs := 0., 0.
+	ntokens, npairs := 0., 0.
 	for _, s := range stats {
-		nterms += s.count
+		ntokens += s.count
 		for _, count := range s.coocc {
 			npairs += count
 		}
@@ -54,7 +67,7 @@ func main() {
 	for i := 0; i < nworkers; i++ {
 		go func() {
 			for ts := range ch {
-				output <- topMI(ts, stats, nterms, npairs, 20)
+				output <- topMI(ts, stats, ntokens, npairs, *kterms)
 			}
 			wg.Done()
 		}()
@@ -72,13 +85,7 @@ func main() {
 		close(ch)
 	}()
 
-	for ts := range output {
-		fmt.Printf("%q: ", ts.term)
-		for _, tc := range ts.top {
-			fmt.Printf(" %q %f", tc.term, tc.count)
-		}
-		fmt.Println("")
-	}
+	store(output)
 }
 
 // Compute co-occurrence statistics.
@@ -145,36 +152,45 @@ func cooccur(tokens []token, stats map[string]termStats) {
 }
 
 // Get top-k terms by mutual information for ts.term.
+// Filters out terms that occur fewer than *minCF times to not suggest typos.
 func topMI(ts *termWithStats, global map[string]termStats,
-	nterms, npairs float64, k int) *termTopK {
+	ntokens, npairs float64, k int) *termTopK {
 
 	coocc := make([]termCount, 0, len(ts.coocc))
 	for other, count := range ts.coocc {
 		if other != ts.term {
-			coocc = append(coocc, termCount{term: other, count: count})
+			coocc = append(coocc, termCount{Term: other, Count: count})
 		}
 	}
 
-	probI := ts.count / nterms
+	probI := ts.count / ntokens
 	for j := range coocc {
-		probJ := global[coocc[j].term].count / nterms
-		probCo := coocc[j].count / npairs
+		if global[coocc[j].Term].count < float64(*minCF) {
+			coocc[j].Count = math.Inf(-1)
+			continue
+		}
+		probJ := global[coocc[j].Term].count / ntokens
+		probCo := coocc[j].Count / npairs
 		mi := math.Log1p(probCo / (probI * probJ))
 
-		coocc[j].count = mi
+		coocc[j].Count = mi
 	}
 
 	bycount := byCount(coocc)
 	sort.Sort(&bycount)
 
-	return &termTopK{term: ts.term, top: bycount[:min(k, len(bycount))]}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
+	if k > len(bycount) {
+		k = len(bycount)
 	}
-	return b
+	// Remove terms that we previously set to -inf.
+	for i := 0; i < k; i++ {
+		if bycount[i].Count < 0 {
+			k = i
+			break
+		}
+	}
+
+	return &termTopK{term: ts.term, top: bycount[:k]}
 }
 
 // Statistics for a term (which is not represented in this struct).
@@ -201,22 +217,22 @@ type termTopK struct {
 }
 
 type termCount struct {
-	term  string
-	count float64
+	Term  string  `json:"term"`
+	Count float64 `json:"value"`
 }
 
 // Sorts a []termCount by descending count.
 type byCount []termCount
 
 func (a byCount) Len() int           { return len(a) }
-func (a byCount) Less(i, j int) bool { return a[i].count > a[j].count }
+func (a byCount) Less(i, j int) bool { return a[i].Count > a[j].Count }
 func (a *byCount) Swap(i, j int)     { (*a)[i], (*a)[j] = (*a)[j], (*a)[i] }
 
 const esbase = "http://localhost:9200"
 
 type hit struct {
-	Id     string `json:"_id"`
-	doc    `json:"_source"`
+	Id  string `json:"_id"`
+	doc `json:"_source"`
 }
 
 type doc struct {
@@ -301,4 +317,57 @@ func analyze(s string) []token {
 	}
 
 	return t.Tokens
+}
+
+const chunksize = 100
+
+// Store all of terms in Elasticsearch.
+func store(terms chan *termTopK) {
+	bulk := make(chan *bytes.Buffer, 1)
+	go func() {
+		chunk := new(bytes.Buffer)
+
+		n := 0
+		for t := range terms {
+			writeBulk(t, chunk)
+
+			n++
+			if n == chunksize {
+				bulk <- chunk
+				n = 0
+				chunk = new(bytes.Buffer)
+			}
+		}
+		if n > 0 {
+			bulk <- chunk
+		}
+		close(bulk)
+	}()
+
+	u := esbase + "/_bulk"
+	for chunk := range bulk {
+		resp, err := http.Post(u, "application/x-www-form-urlencoded", chunk)
+
+		var data []byte
+		if err == nil {
+			data, err = ioutil.ReadAll(resp.Body)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "got %s for %s\n", data, chunk)
+			panic(err)
+		}
+	}
+}
+
+// Write t as ES bulk requests to w.
+func writeBulk(t *termTopK, w io.Writer) {
+	jt, _ := json.Marshal(t.term)
+	fmt.Fprintf(w,
+		`{"index": {"_index": %q, "_type": "miterm", "_id": %s}}`,
+		*miIndex, jt)
+	fmt.Fprintln(w)
+
+	fmt.Fprint(w, "{\"terms\":")
+	jt, _ = json.Marshal(t.top)
+	fmt.Fprintf(w, "%s}\n", jt)
 }
