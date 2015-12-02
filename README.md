@@ -8,10 +8,15 @@ This repository contains a python package, a web server and a web front-end to f
   * Papers etc. about Enron data: http://enrondata.org/content/research/
 * Implement query expansion algorithms
 * Merge/cluster results from query expansion algorithms
+  * Use word2vec word vectors to cluster/map term suggestions
 * Visualize merged query expansion results
+  * Normalize scores of suggested words, so that aggregating scores make more sense
+  * Focus on how many methods suggested a word instead of the scores assigned
 * Build simple user interface/demo
+  * Make maximum number of terms suggested a parameter
 * Do the same for terms that do not correlate/co-occur with query terms (does
   that make sense?)
+* How to evaluate/validate results?
 
 ## Installation
 
