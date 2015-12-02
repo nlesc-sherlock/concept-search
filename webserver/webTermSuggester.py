@@ -11,6 +11,7 @@ from elsearch import ELSearch
 from wnsearch import WNSearch
 from word2vec import Word2VecSuggester
 from precomputed import PrecomputedClusterSuggester
+from rocchio import RocchioSuggester
 import MakeChart
 from config import get_word2vec_model
 
@@ -21,7 +22,7 @@ methodsConfigurationDict = {1: (WNSearch, ()),
                             2: (ELSearch, ()),
                             3: (PrecomputedClusterSuggester, ()),
                             4: (Word2VecSuggester, (get_word2vec_model(), )),
-                            5: (PrecomputedSuggester, ()),
+                            5: (RocchioSuggester, ()),
                            }
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
