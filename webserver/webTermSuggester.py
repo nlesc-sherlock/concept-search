@@ -20,7 +20,9 @@ CORS(app)
 methodsConfigurationDict = {1: (WNSearch, ()),
                             2: (ELSearch, ()),
                             3: (PrecomputedClusterSuggester, ()),
-                            4: (Word2VecSuggester, (get_word2vec_model(), ))}
+                            4: (Word2VecSuggester, (get_word2vec_model(), )),
+                            5: (PrecomputedSuggester, ()),
+                           }
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
     methodsInstances[mKey] = methodsConfigurationDict[mKey][0](*methodsConfigurationDict[mKey][1])

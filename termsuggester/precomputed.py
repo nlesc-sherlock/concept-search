@@ -1,5 +1,25 @@
 from elasticsearch import Elasticsearch
+import elasticsearch.exceptions
 from elasticsearch.helpers import scan
+
+
+class PrecomputedSuggester(object):
+    """Term suggester that serves pre-computed suggestions."""
+    # Used for mutual information, but reusable. Index format is one document
+    # per term, with the term as the _id, that contains a list of
+    # {"term": term, "value": weight} structures.
+
+    def __init__(self, index_name="mi"):
+        self._es = Elasticsearch()
+        self._index_name = index_name
+
+    def suggest_terms(self, query_word):
+        try:
+            hit = self._es.get(index=self._index_name, doc_type='miterm',
+                               id=query_word)
+            return {t["term"]: t["value"] for t in hit['_source']['terms']}
+        except elasticsearch.exceptions.NotFoundError:
+            return {}
 
 
 class PrecomputedClusterSuggester(object):
