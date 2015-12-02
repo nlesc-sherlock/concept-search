@@ -4,4 +4,6 @@ You need a Go compiler to run this.
 
 Then
 
-    go run mutinf.go index doctype > mutinf.txt
+    go run mutinf.go index doctype
+
+(-h flag to get options).

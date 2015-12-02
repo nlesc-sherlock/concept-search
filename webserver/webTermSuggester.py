@@ -10,7 +10,7 @@ from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
 from word2vec import Word2VecSuggester
-from precomputed import PrecomputedSuggester
+from precomputed import PrecomputedClusterSuggester
 import MakeChart
 from config import get_word2vec_model
 
@@ -19,8 +19,10 @@ CORS(app)
 
 methodsConfigurationDict = {1: (WNSearch, ()),
                             2: (ELSearch, ()),
-                            3: (PrecomputedSuggester, ()),
-                            4: (Word2VecSuggester, (get_word2vec_model(), ))}
+                            3: (PrecomputedClusterSuggester, ()),
+                            4: (Word2VecSuggester, (get_word2vec_model(), )),
+                            5: (PrecomputedSuggester, ()),
+                           }
 methodsInstances = {}
 for mKey in methodsConfigurationDict:
     methodsInstances[mKey] = methodsConfigurationDict[mKey][0](*methodsConfigurationDict[mKey][1])
