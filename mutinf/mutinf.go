@@ -25,16 +25,22 @@ import (
 	"sync"
 )
 
+var kterms = flag.Int("k", 20,
+	"report at most k terms for each query term")
 var miIndex = flag.String("index", "mi",
 	"name of MI terms index")
+var minCF = flag.Int("mincf", 2,
+	"disregard terms that occur less often than this")
 var windowsize = flag.Int("w", 4,
 	"size of window for determining co-occurrence")
+
+const usage = "Usage: %s [options] index doctype\n  -h\n\tshow options\n"
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s index doctype\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, usage, os.Args[0])
 		os.Exit(1)
 	}
 	index, doctype := args[0], args[1]
@@ -45,9 +51,9 @@ func main() {
 	go allDocs(index, doctype, docs)
 
 	stats := cooccurStats(nworkers, docs)
-	nterms, npairs := 0., 0.
+	ntokens, npairs := 0., 0.
 	for _, s := range stats {
-		nterms += s.count
+		ntokens += s.count
 		for _, count := range s.coocc {
 			npairs += count
 		}
@@ -61,7 +67,7 @@ func main() {
 	for i := 0; i < nworkers; i++ {
 		go func() {
 			for ts := range ch {
-				output <- topMI(ts, stats, nterms, npairs, 20)
+				output <- topMI(ts, stats, ntokens, npairs, *kterms)
 			}
 			wg.Done()
 		}()
@@ -146,8 +152,9 @@ func cooccur(tokens []token, stats map[string]termStats) {
 }
 
 // Get top-k terms by mutual information for ts.term.
+// Filters out terms that occur fewer than *minCF times to not suggest typos.
 func topMI(ts *termWithStats, global map[string]termStats,
-	nterms, npairs float64, k int) *termTopK {
+	ntokens, npairs float64, k int) *termTopK {
 
 	coocc := make([]termCount, 0, len(ts.coocc))
 	for other, count := range ts.coocc {
@@ -156,9 +163,13 @@ func topMI(ts *termWithStats, global map[string]termStats,
 		}
 	}
 
-	probI := ts.count / nterms
+	probI := ts.count / ntokens
 	for j := range coocc {
-		probJ := global[coocc[j].Term].count / nterms
+		if global[coocc[j].Term].count < float64(*minCF) {
+			coocc[j].Count = math.Inf(-1)
+			continue
+		}
+		probJ := global[coocc[j].Term].count / ntokens
 		probCo := coocc[j].Count / npairs
 		mi := math.Log1p(probCo / (probI * probJ))
 
@@ -168,14 +179,18 @@ func topMI(ts *termWithStats, global map[string]termStats,
 	bycount := byCount(coocc)
 	sort.Sort(&bycount)
 
-	return &termTopK{term: ts.term, top: bycount[:min(k, len(bycount))]}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
+	if k > len(bycount) {
+		k = len(bycount)
 	}
-	return b
+	// Remove terms that we previously set to -inf.
+	for i := 0; i < k; i++ {
+		if bycount[i].Count < 0 {
+			k = i
+			break
+		}
+	}
+
+	return &termTopK{term: ts.term, top: bycount[:k]}
 }
 
 // Statistics for a term (which is not represented in this struct).
