@@ -9,7 +9,7 @@ es = Elasticsearch()
 
 
 class RocchioSuggester():
-    """Class to get suggestions using Relevance Feedback (Rocchio algorithm)"""
+    """Class to get suggestions using Rocchio algorithm"""
     def __init__(self, numResults = 20, numTop = 20, numBottom = 20, weightInitial = 1., weightTop = 1., weightBottom = 1.):
         self.numResults = numResults
         self.numTop = numTop
