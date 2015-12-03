@@ -3,11 +3,10 @@
 import nltk
 from nltk.corpus import wordnet as wn
 
+# This method requires to run dw_wordnet prior to any execution with this suggester
+
 class WNSearch():
     """Class to perform searches in WordNet"""
-    def __init__(self):
-        nltk.download('wordnet')
-
     def suggest_terms(self,query_word):
         term_dict={}
         for syn in wn.synsets(query_word):
