@@ -4,6 +4,6 @@ You need a Go compiler to run this.
 
 Then
 
-    go run mutinf.go index doctype |
-        curl -s -XPOST localhost:9200/_bulk --data-binary @- |
-        jq '.took, .errors'
+    go run mutinf.go index doctype
+
+(-h flag to get options).

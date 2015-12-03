@@ -8,10 +8,15 @@ This repository contains a python package, a web server and a web front-end to f
   * Papers etc. about Enron data: http://enrondata.org/content/research/
 * Implement query expansion algorithms
 * Merge/cluster results from query expansion algorithms
+  * Use word2vec word vectors to cluster/map term suggestions
 * Visualize merged query expansion results
+  * Normalize scores of suggested words, so that aggregating scores make more sense
+  * Focus on how many methods suggested a word instead of the scores assigned
 * Build simple user interface/demo
+  * Make maximum number of terms suggested a parameter
 * Do the same for terms that do not correlate/co-occur with query terms (does
   that make sense?)
+* How to evaluate/validate results?
 
 ## Installation
 
@@ -28,7 +33,7 @@ The suggestions from the various term-search methods are aggregated. The aggrega
 Current term-search methods:
  - ELSearch: Find suggestions using ElasticSearch significant terms aggregation from a Document Corpus.
  - WNSearch: Use WordNet to find suggestions for a term
- - PrecomputedSuggester: Finds suggesstions using a pre-computed term clustering data set stored in ElasticSearch. The term clustering data set is computed with Non-negative matrix factorization (NMF) clustering method.
+ - PrecomputedClusterSuggester: Finds suggesstions using a pre-computed term clustering data set stored in ElasticSearch. The term clustering data set is computed with Non-negative matrix factorization (NMF) clustering method.
  - Word2VecSuggester: Use word2vec to find most similar terms
 
 Current methods for aggregation of results from various term-search methods:
@@ -47,7 +52,7 @@ For example that the related ElasticSearch indixes have been created.
 
 - ELSearch method requires to run `get_dc.py` and `dc_to_es.py` before using termsuggester.
 - WNSearch method does not require setup.
-- PrecomputedSuggester method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
+- PrecomputedClusterSuggester method requires to run `fit_nmf.py` and `nmf_to_es.py` before using termsuggester.
 To get NMF word clusters for suggestions, run
     `pip install -U git+https://github.com/scikit-learn/scikit-learn.git`
 Then
@@ -55,7 +60,7 @@ Then
 (Try `n_clusters`=500 and `alpha`=1.)
 Then store the result in Elasticsearch:
     `python nmf_to_es.py nmf_output.json`
-The index that is constructed can then be used by the PrecomputedSuggester.
+The index that is constructed can then be used by the PrecomputedClusterSuggester.
 
 - Word2VecSuggester requires to run `train_word2vec.py` before using it.
 
@@ -65,9 +70,9 @@ The index that is constructed can then be used by the PrecomputedSuggester.
 from TermSuggestionsAggregator import TermSuggestionsAggregator, Aggregation
 from elsearch import ELSearch
 from wnsearch import WNSearch
-from precomputed import PrecomputedSuggester
+from precomputed import PrecomputedClusterSuggester
 
-methods = (WNSearch(), ELSearch(), PrecomputedSuggester())
+methods = (WNSearch(), ELSearch(), PrecomputedClusterSuggester())
 ts = TermSuggestionsAggregator()
 d = ts.getSuggestions('car', methods, Aggregation.Average)
 print d
